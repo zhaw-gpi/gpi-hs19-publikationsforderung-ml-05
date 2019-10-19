@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_0ik2fqe" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.1.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_0ik2fqe" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.1.0">
   <bpmn:collaboration id="Collaboration_1cnfcp8">
     <bpmn:participant id="Participant_Hauptautor" name="Hauptautor" processRef="Process_1n0y0zx" />
     <bpmn:participant id="Participant_Stab" name="Stab" processRef="Process_19c62ws" />
@@ -142,33 +142,21 @@
         <bpmn:flowNodeRef>StartEvent_AntragsformularEingereicht</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="Lane_Automatisch" name="Automatisch">
-        <bpmn:flowNodeRef>Task_MetadatenZuReferenzpaperSuchen</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Task_AACSBRatingDesJournalsErmitteln</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>Task_ScoreDesAntragsErmitteln</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>ExclusiveGateway_Score</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>ExclusiveGateway_1x60s1f</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>ExclusiveGateway_Prufentscheid</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>EndEvent_PositiverEnscheidMitgeteilt</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>EndEvent_AblehnenderEntscheidMitgeteilt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ScoreDesAntragsErmitteln</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_MetadatenZuReferenzpaperSuchen</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_AACSBRatingDesJournalsErmitteln</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="Lane_Stab" name="Stab">
         <bpmn:flowNodeRef>Task_AntragPrufen</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
-    <bpmn:task id="Task_MetadatenZuReferenzpaperSuchen" name="Metadaten zu Referenzpaper suchen">
-      <bpmn:incoming>SequenceFlow_0qmi2y6</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_164geph</bpmn:outgoing>
-    </bpmn:task>
     <bpmn:sequenceFlow id="SequenceFlow_0qmi2y6" sourceRef="StartEvent_AntragsformularEingereicht" targetRef="Task_MetadatenZuReferenzpaperSuchen" />
-    <bpmn:task id="Task_AACSBRatingDesJournalsErmitteln" name="AACSB-Rating des Journals ermitteln">
-      <bpmn:incoming>SequenceFlow_164geph</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_1wdydgz</bpmn:outgoing>
-    </bpmn:task>
     <bpmn:sequenceFlow id="SequenceFlow_164geph" sourceRef="Task_MetadatenZuReferenzpaperSuchen" targetRef="Task_AACSBRatingDesJournalsErmitteln" />
-    <bpmn:task id="Task_ScoreDesAntragsErmitteln" name="Score des Antrags ermitteln">
-      <bpmn:incoming>SequenceFlow_1wdydgz</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_16cpse5</bpmn:outgoing>
-    </bpmn:task>
     <bpmn:sequenceFlow id="SequenceFlow_1wdydgz" sourceRef="Task_AACSBRatingDesJournalsErmitteln" targetRef="Task_ScoreDesAntragsErmitteln" />
     <bpmn:exclusiveGateway id="ExclusiveGateway_Score" name="Score?">
       <bpmn:incoming>SequenceFlow_16cpse5</bpmn:incoming>
@@ -183,11 +171,18 @@
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${score&gt;=4}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="SequenceFlow_01gbmrh" sourceRef="Task_AntragPrufen" targetRef="ExclusiveGateway_Prufentscheid" />
-    <bpmn:task id="Task_AntragPrufen" name="Antrag prüfen">
-      <bpmn:incoming>SequenceFlow_41</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_01gbmrh</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:startEvent id="StartEvent_AntragsformularEingereicht" name="Antragsformular eingereicht">
+    <bpmn:startEvent id="StartEvent_AntragsformularEingereicht" name="Antragsformular eingereicht" camunda:asyncAfter="true" camunda:initiator="${applicant}">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="authorFirstName" label="Autor Vorname" type="string" />
+          <camunda:formField id="authorLastName" label="Nachname" type="string" />
+          <camunda:formField id="authorHoursDesired" label="Gewünschte Stundenentschädigung" type="long" />
+          <camunda:formField id="refPaperDoi" label="Referenzpaper-DOI" type="string" />
+          <camunda:formField id="paperTitle" label="Titel des geplanten Artikels" type="string" />
+          <camunda:formField id="paperDescription" label="Beschreibung des geplanten Artikels" type="string" />
+          <camunda:formField id="journalTitle" label="Fachzeitschrift des geplanten Artikels" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
       <bpmn:outgoing>SequenceFlow_0qmi2y6</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:exclusiveGateway id="ExclusiveGateway_1x60s1f">
@@ -213,6 +208,82 @@
     <bpmn:endEvent id="EndEvent_AblehnenderEntscheidMitgeteilt" name="Ablehnender Entscheid mitgeteilt">
       <bpmn:incoming>SequenceFlow_1p9ep4j</bpmn:incoming>
     </bpmn:endEvent>
+    <bpmn:userTask id="Task_AntragPrufen" name="Antrag prüfen" camunda:asyncAfter="true" camunda:candidateGroups="stab">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="authorFirstName" label="Autor Vorname" type="string">
+            <camunda:validation>
+              <camunda:constraint name="readonly" config="true" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="authorLastName" label="Nachname" type="string">
+            <camunda:validation>
+              <camunda:constraint name="readonly" config="true" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="authorHoursDesired" label="Gewünschte Stundenentschädigung" type="long">
+            <camunda:validation>
+              <camunda:constraint name="readonly" config="true" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="paperTitle" label="Titel des geplanten Artikels" type="string">
+            <camunda:validation>
+              <camunda:constraint name="readonly" config="true" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="paperDescription" label="Beschreibung des geplanten Artikels" type="string">
+            <camunda:validation>
+              <camunda:constraint name="readonly" config="true" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="journalTitle" label="Fachzeitschrift des geplanten Artikels" type="string">
+            <camunda:validation>
+              <camunda:constraint name="readonly" config="true" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="journalAacsbRating" label="Fachzeitschrift-AACSB-Rating" type="long">
+            <camunda:validation>
+              <camunda:constraint name="readonly" config="true" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="refPaperTitle" label="Referenzpaper-Titel" type="string">
+            <camunda:validation>
+              <camunda:constraint name="readonly" config="true" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="refPaperAbstract" label="Referenzpaper-Abstract" type="string">
+            <camunda:validation>
+              <camunda:constraint name="readonly" config="true" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="score" label="Automatisch ermittelte Wertung" type="long">
+            <camunda:validation>
+              <camunda:constraint name="readonly" config="true" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="decision" label="Antrag bewilligen?" type="boolean" />
+          <camunda:formField id="decisionReasons" label="Begründung" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_41</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_01gbmrh</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:scriptTask id="Task_ScoreDesAntragsErmitteln" name="Score des Antrags ermitteln" scriptFormat="JavaScript">
+      <bpmn:incoming>SequenceFlow_1wdydgz</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_16cpse5</bpmn:outgoing>
+      <bpmn:script>execution.setVariable("score", (authorHoursDesired &gt; 70 ? 3 : 6));</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:scriptTask id="Task_MetadatenZuReferenzpaperSuchen" name="Metadaten zu Referenzpaper suchen" scriptFormat="JavaScript">
+      <bpmn:incoming>SequenceFlow_0qmi2y6</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_164geph</bpmn:outgoing>
+      <bpmn:script>execution.setVariable("refPaperTitle", "Auswirkungen des Moduls Geschäftsprozessintegration auf die mentale Gesundheit von Studierenden");
+execution.setVariable("refPaperAbstract", "Lorem ipsum ...");</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:scriptTask id="Task_AACSBRatingDesJournalsErmitteln" name="AACSB-Rating des Journals ermitteln" scriptFormat="JavaScript">
+      <bpmn:incoming>SequenceFlow_164geph</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1wdydgz</bpmn:outgoing>
+      <bpmn:script>execution.setVariable("journalAacsbRating", 3);</bpmn:script>
+    </bpmn:scriptTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1cnfcp8">
@@ -417,25 +488,16 @@
           <dc:Bounds x="222" y="658" width="79" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_1x0ygvj_di" bpmnElement="Task_MetadatenZuReferenzpaperSuchen">
-        <dc:Bounds x="323" y="726" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_0qmi2y6_di" bpmnElement="SequenceFlow_0qmi2y6">
         <di:waypoint x="279" y="633" />
         <di:waypoint x="302" y="633" />
         <di:waypoint x="302" y="766" />
         <di:waypoint x="323" y="766" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Task_1x2af5h_di" bpmnElement="Task_AACSBRatingDesJournalsErmitteln">
-        <dc:Bounds x="465" y="726" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_164geph_di" bpmnElement="SequenceFlow_164geph">
         <di:waypoint x="423" y="766" />
         <di:waypoint x="465" y="766" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Task_0iav55i_di" bpmnElement="Task_ScoreDesAntragsErmitteln">
-        <dc:Bounds x="607" y="726" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_1wdydgz_di" bpmnElement="SequenceFlow_1wdydgz">
         <di:waypoint x="565" y="766" />
         <di:waypoint x="607" y="766" />
@@ -470,9 +532,6 @@
         <di:waypoint x="1019" y="766" />
         <di:waypoint x="1200" y="766" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Task_18qobe6_di" bpmnElement="Task_AntragPrufen">
-        <dc:Bounds x="835" y="981" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_0u6gws1_di" bpmnElement="SequenceFlow_41">
         <di:waypoint x="774" y="791" />
         <di:waypoint x="774" y="1021" />
@@ -548,6 +607,18 @@
         <di:waypoint x="902" y="1104" />
         <di:waypoint x="902" y="1061" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="UserTask_1kb3nm1_di" bpmnElement="Task_AntragPrufen">
+        <dc:Bounds x="835" y="981" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_1yyiiyx_di" bpmnElement="Task_ScoreDesAntragsErmitteln">
+        <dc:Bounds x="607" y="726" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_0ou2dsu_di" bpmnElement="Task_MetadatenZuReferenzpaperSuchen">
+        <dc:Bounds x="323" y="726" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_0nb4kov_di" bpmnElement="Task_AACSBRatingDesJournalsErmitteln">
+        <dc:Bounds x="465" y="726" width="100" height="80" />
+      </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>
